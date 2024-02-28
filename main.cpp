@@ -1,11 +1,15 @@
 #include <iostream>
 #include <vector>
 
-void makeDiagMatrix(std::vector<std::vector<double>>& a, std::vector<int>& indX, std::vector<std::vector<double>>& b);
+void makeDiagMatrix(std::vector<std::vector<double>>& a, std::vector<int>& indX);
 void printMatrix(const std::vector<std::vector<double>>& a);
 bool check(const std::vector<std::vector<double>>& a);
 std::vector<double> calculate(const std::vector<std::vector<double>>& c, const std::vector<std::vector<double>>& d, const std::vector<std::vector<double>>& x);
 double checkPrecision(const std::vector<std::vector<double>>& x);
+std::vector<int> get_reverse_permutation(const std::vector<int>& permutation);
+std::vector<std::vector<double>> randomGenerator(int m, int n);
+std::vector<std::vector<double>> cheatMakeDiagMatrix(const std::vector<std::vector<double>>& a);
+
 
 double abs(double a) {
     return a < 0 ? -a : a;
@@ -16,8 +20,14 @@ int main() {
     std::cout << "Read from file? (Y/n)\n";
     std::cin >> read_from_file;
     if (read_from_file == 'Y' || read_from_file == 'y') {
-        freopen("input.txt", "r", stdin);
-        freopen("output.txt", "w", stdout);
+        if (freopen("input.txt", "r", stdin) == nullptr) {
+            std::cerr << "Failed to open input file." << std::endl;
+            return 1; // or handle the error in an appropriate way
+        }
+        if (freopen("output.txt", "w", stdout) == nullptr) {
+            std::cerr << "Failed to open output file." << std::endl;
+            return 1; // or handle the error in an appropriate way
+        }
     }
     double precision;
     std::cout << "Enter precision\n";
@@ -42,12 +52,27 @@ int main() {
         std::cin >> b[0][i];
     }
 
+    #ifdef DEBUG
+    n = 20;
+    a = randomGenerator(n, n);
+    a = cheatMakeDiagMatrix(a);
+    b = randomGenerator(1, n);
+    std::cout << "DEBUGINFO\n";
+    std::cout << "Matrix A\n";
+    printMatrix(a);
+    std::cout << "Matrix B\n";
+    for (int i = 0; i < n; i++) {
+        std::cout << b[0][i] << " ";
+    }
+    std::cout << std::endl;
+    #endif
+
     std::vector<int> indX(n);
     for (int i = 0; i < n; i++) {
         indX[i] = i;
     }
 
-    makeDiagMatrix(a, indX, b);
+    makeDiagMatrix(a, indX);
     bool breakFlag = !check(a);
     if (breakFlag) {
         std::cout << "no diagonal dominance\n";
@@ -124,7 +149,7 @@ int main() {
     return 0;
 }
 
-void makeDiagMatrix(std::vector<std::vector<double>>& a, std::vector<int>& indX, std::vector<std::vector<double>>& b) {
+void makeDiagMatrix(std::vector<std::vector<double>>& a, std::vector<int>& indX) {
     int n = a.size();
 
     for (int i = 0; i < n; i++) { // проходим по строкам
@@ -142,9 +167,9 @@ void makeDiagMatrix(std::vector<std::vector<double>>& a, std::vector<int>& indX,
             indX[i] = indX[maxIndex];
             indX[maxIndex] = tmp;
             for (int j = 0; j < n; j++) {
-                double tmp = a[maxIndex][j];
+                double tmp2 = a[maxIndex][j];
                 a[maxIndex][j] = a[i][j];
-                a[i][j] = tmp;
+                a[i][j] = tmp2;
             }
         }
     }
@@ -209,10 +234,32 @@ std::vector<int> get_reverse_permutation(const std::vector<int>& permutation) {
     return reverse_permutation;
 }
 
-// есть перестановка 2 0 1
-// обратная перестановка 1 2 0
+std::vector<std::vector<double>> randomGenerator(int m, int n) {
+    std::vector<std::vector<double>> a(m, std::vector<double>(n));
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            a[i][j] = rand() % 100;
+        }
+    }
+    return a;
+}
 
-// 2 3 1 0
-// 3 2 0 1
+std::vector<std::vector<double>> cheatMakeDiagMatrix(const std::vector<std::vector<double>>& a) {
+    int n = a.size();
+    std::vector<std::vector<double>> c(n, std::vector<double>(n));
+    double sum = 0;
+    for (int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            c[i][j] = a[i][j];
+            if (i!=j) {
+                sum += abs(a[i][j]);
+            }
+        }
+    }
 
-// 2
+    for (int i = 0; i < n; i++) {
+        c[i][i] = sum + 1;
+    }
+
+    return c;
+}
